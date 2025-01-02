@@ -1,5 +1,6 @@
 package com.laphayen.VisitorQueueSystemFlow.service;
 
+import com.laphayen.VisitorQueueSystemFlow.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class UserQueueService {
 
         return reactiveRedisTemplate.opsForZSet().add(USER_QUEUE_WAIT_KEY.formatted(queue), userId.toString(), unixTimestamp)
                 .filter(i -> i)
-                .switchIfEmpty(Mono.error(new RuntimeException("User queue already exists")))
+                .switchIfEmpty(Mono.error(ErrorCode.USER_ALREADY_IN_QUEUE.toApplicationException()))
                 .flatMap(i -> reactiveRedisTemplate.opsForZSet().rank(USER_QUEUE_WAIT_KEY.formatted(queue), userId.toString()))
                 .map(i -> i >= 0 ? i+1 : i);
 
